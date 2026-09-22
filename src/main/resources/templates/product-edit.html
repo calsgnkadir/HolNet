@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title th:text="'Düzenle · ' + ${product.code} + ' · İntaş ERP'">Ürün Düzenle · İntaş ERP</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <header class="top">
+      <span class="logo">İNTAŞ <b>ERP</b></span>
+      <nav>
+        <a href="/urunler" class="active">Ürünler</a>
+        <a href="/satis">Satış</a>
+        <a href="/satislar">Satışlar</a>
+        <a href="/cari">Cari</a>
+      </nav>
+    </header>
+
+    <div class="wrap">
+      <div class="row">
+        <div>
+          <h1 th:text="${product.name}">Ürün adı</h1>
+          <span class="muted code" th:text="${product.code}">KOD</span>
+        </div>
+        <a class="btn ghost" href="/urunler">← Listeye dön</a>
+      </div>
+
+      <div th:if="${error}" class="flash err" th:text="${error}"></div>
+
+      <div class="card">
+        <form method="post" th:action="@{'/urunler/' + ${product.id} + '/duzenle'}" class="grid-form">
+          <label>
+            <span>Ürün adı</span>
+            <input class="grow" type="text" name="name" th:value="${product.name}" required />
+          </label>
+
+          <label>
+            <span>Tedarikçi</span>
+            <input class="grow" type="text" name="supplier" th:value="${product.supplier}" />
+          </label>
+
+          <label>
+            <span>Barkod (adet)</span>
+            <span class="inline" style="gap: 6px">
+              <input class="grow" id="barcode-input" type="text" name="barcode"
+                     th:value="${product.barcode}" placeholder="okutunca dolacak" />
+              <button type="button" class="btn scan"
+                      onclick="ErpScanner.open('barcode-input')">Okut</button>
+            </span>
+          </label>
+
+          <label>
+            <span>Stok (adet)</span>
+            <input type="number" name="stock" th:value="${product.stock}" min="0" step="1" />
+          </label>
+
+          <label>
+            <span>Birim fiyat (₺, KDV hariç)</span>
+            <input type="text" name="price"
+                   th:value="${product.price}"
+                   placeholder="örn. 12,50" inputmode="decimal" />
+          </label>
+
+          <label>
+            <span>KDV oranı (%)</span>
+            <input type="number" name="vatRate"
+                   th:value="${product.vatRate != null ? product.vatRate : 20}"
+                   min="0" max="100" step="1" />
+          </label>
+
+          <div class="span2 sub">Birim seti — koli satışı için</div>
+
+          <label>
+            <span>Koli birimi</span>
+            <input type="text" name="cartonUnit" th:value="${product.cartonUnit}" placeholder="KOLİ" />
+          </label>
+
+          <label>
+            <span>1 koli = kaç adet</span>
+            <input type="number" name="unitsPerCarton" th:value="${product.unitsPerCarton}"
+                   min="1" step="1" placeholder="örn. 60" />
+          </label>
+
+          <div class="span2 hint">
+            Örn. Go Plus'taki gibi <b>1 KOLİ = 60 ADET</b> → koli birimi <code>KOLİ</code>, adet <code>60</code>.
+            Satışta "Koli" seçilince stoktan otomatik <b>miktar × 60</b> düşer.
+          </div>
+
+          <div class="span2 inline">
+            <button type="submit" class="btn big">Kaydet</button>
+            <a class="btn ghost" href="/urunler">Vazgeç</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="/js/scanner.js"></script>
+  </body>
+</html>

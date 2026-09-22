@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title th:text="'Satış Fişi #' + ${sale.id} + ' · İntaş ERP'">Satış Fişi · İntaş ERP</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <header class="top noprint">
+      <span class="logo">İNTAŞ <b>ERP</b></span>
+      <nav>
+        <a href="/urunler">Ürünler</a>
+        <a href="/satis">Satış</a>
+        <a href="/satislar">Satışlar</a>
+        <a href="/cari">Cari</a>
+      </nav>
+    </header>
+
+    <div class="wrap">
+      <div class="flash ok noprint">Satış tamamlandı — stok güncellendi.</div>
+
+      <div class="card">
+        <div class="row">
+          <div>
+            <h1 th:text="'Satış Fişi #' + ${sale.id}">Satış Fişi</h1>
+            <span class="muted" th:if="${sale.customer != null}"
+                  th:text="(sale.customer.code != null ? sale.customer.code + ' · ' : '') + sale.customer.name + ' (cariye işlendi)'">Cari</span>
+            <span class="muted" th:unless="${sale.customer != null}"
+                  th:text="${sale.customerName != null ? sale.customerName : 'Cari belirtilmedi'}">Cari</span>
+          </div>
+          <div class="inline noprint">
+            <a class="btn" th:href="@{'/satis/' + ${sale.id} + '/pdf'(tip='fatura')}" target="_blank">Fatura PDF</a>
+            <a class="btn ghost" th:href="@{'/satis/' + ${sale.id} + '/pdf'(tip='irsaliye')}" target="_blank">İrsaliye PDF</a>
+            <button type="button" class="btn ghost" onclick="window.print()">Yazdır</button>
+            <a class="btn ghost" href="/satis">Yeni Satış</a>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Kod</th>
+              <th>Ürün</th>
+              <th class="num">Miktar</th>
+              <th>Birim</th>
+              <th class="num">Adet</th>
+              <th class="num">Tutar</th>
+              <th class="num">KDV</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="it : ${sale.items}">
+              <td class="code" th:text="${it.productCode}">KOD</td>
+              <td th:text="${it.productName}">Ürün</td>
+              <td class="num" th:text="${it.quantity}">1</td>
+              <td th:text="${it.unitLabel}">ADET</td>
+              <td class="num" th:text="${it.baseQuantity}">1</td>
+              <td class="num" th:text="${it.lineTotal != null ? it.lineTotal + ' ₺' : '—'}">—</td>
+              <td class="num" th:text="${it.vatAmount != null ? '%' + it.vatRate + ' · ' + it.vatAmount + ' ₺' : '—'}">—</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="5" class="num">Ara Toplam (KDV hariç)</td>
+              <td class="num" th:text="${sale.total} + ' ₺'">0 ₺</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td colspan="5" class="num">Toplam KDV</td>
+              <td class="num" th:text="${sale.totalVat} + ' ₺'">0 ₺</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td colspan="5" class="num grand">Genel Toplam</td>
+              <td class="num grand" th:text="${sale.totalGross} + ' ₺'">0 ₺</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>

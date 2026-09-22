@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Satış · İntaş ERP</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <header class="top">
+      <span class="logo">İNTAŞ <b>ERP</b></span>
+      <nav>
+        <a href="/urunler">Ürünler</a>
+        <a href="/satis" class="active">Satış</a>
+        <a href="/satislar">Satışlar</a>
+        <a href="/cari">Cari</a>
+      </nav>
+    </header>
+
+    <div class="wrap">
+      <div class="row">
+        <div>
+          <h1>Yeni Satış</h1>
+          <span class="muted">Ürün ekleyin — tamamlayınca stok otomatik düşer.</span>
+        </div>
+      </div>
+
+      <div th:if="${error}" class="flash err" th:text="${error}"></div>
+
+      <!-- Add a line: type/scan a code, quantity, unit -->
+      <div class="card">
+        <form class="inline" id="add-form" method="post" action="/satis/ekle">
+          <input
+            class="grow"
+            id="code-input"
+            type="text"
+            name="code"
+            placeholder="Ürün kodu veya barkod... (USB okuyucu buraya yazar)"
+            autofocus
+            required />
+          <input type="number" name="quantity" value="1" min="1" style="width: 90px" />
+          <select name="birim">
+            <option value="ADET">Adet</option>
+            <option value="KOLI">Koli</option>
+          </select>
+          <button type="submit">Ekle</button>
+          <button type="button" class="btn scan"
+                  onclick="ErpScanner.open('code-input', { submitFormId: 'add-form' })">
+            Barkod Okut
+          </button>
+        </form>
+        <p class="muted" style="margin: 10px 0 0">
+          Telefon kamerasıyla okut → seçili miktar kadar eklenir. USB/Bluetooth okuyucu ise
+          kutuya okutup Enter'lar. Barkodu ürüne <a href="/urunler">Ürünler → Düzenle</a>'den tanımlayın.
+        </p>
+      </div>
+
+      <div class="card">
+        <div th:if="${sale.items.isEmpty()}" class="empty">
+          Henüz satır yok. Yukarıdan ürün kodu yazıp "Ekle"ye basın.
+        </div>
+
+        <table th:unless="${sale.items.isEmpty()}">
+          <thead>
+            <tr>
+              <th>Kod</th>
+              <th>Ürün</th>
+              <th class="num">Miktar</th>
+              <th>Birim</th>
+              <th class="num">Adet karşılığı</th>
+              <th class="num">Birim Fiyat</th>
+              <th class="num">Tutar</th>
+              <th class="num">KDV</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="it : ${sale.items}">
+              <td class="code" th:text="${it.productCode}">KOD</td>
+              <td th:text="${it.productName}">Ürün</td>
+              <td class="num" th:text="${it.quantity}">1</td>
+              <td th:text="${it.unitLabel}">ADET</td>
+              <td class="num" th:text="${it.baseQuantity}">1</td>
+              <td class="num" th:text="${it.unitPrice != null ? it.unitPrice + ' ₺' : '—'}">—</td>
+              <td class="num" th:text="${it.lineTotal != null ? it.lineTotal + ' ₺' : '—'}">—</td>
+              <td class="num" th:text="${it.vatAmount != null ? '%' + it.vatRate + ' · ' + it.vatAmount + ' ₺' : '—'}">—</td>
+              <td>
+                <form method="post" action="/satis/satir/sil" class="inline">
+                  <input type="hidden" name="itemId" th:value="${it.id}" />
+                  <button type="submit" class="link">Sil</button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4">Toplam</td>
+              <td class="num" th:text="${sale.totalBaseQuantity} + ' adet'">0 adet</td>
+              <td></td>
+              <td class="num" th:text="${sale.total} + ' ₺'">0 ₺</td>
+              <td class="num" th:text="${sale.totalVat} + ' ₺'">0 ₺</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td colspan="6"></td>
+              <td class="grand">Genel Toplam</td>
+              <td class="num grand" th:text="${sale.totalGross} + ' ₺'">0 ₺</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Finalize -->
+      <div class="card" th:unless="${sale.items.isEmpty()}">
+        <form class="row" method="post" action="/satis/tamamla">
+          <div class="inline grow">
+            <select name="customerId" class="grow">
+              <option value="">— Cari seç (borç işlensin) —</option>
+              <option th:each="c : ${customers}" th:value="${c.id}"
+                      th:text="${(c.code != null ? c.code + ' · ' : '') + c.name}">Cari</option>
+            </select>
+            <input type="text" name="customerName" placeholder="veya serbest ad (muhtelif)" />
+          </div>
+          <div class="inline">
+            <button type="submit" class="btn big">Satışı Tamamla (stok düş)</button>
+          </div>
+        </form>
+        <p class="muted" style="margin: 10px 0 0">
+          Cari seçilirse KDV dahil <b th:text="${sale.totalGross} + ' ₺'">0 ₺</b> o cariye borç yazılır.
+          Yeni müşteri için <a href="/cari/yeni">cari ekle</a>.
+        </p>
+        <form method="post" action="/satis/temizle" style="margin-top: 10px">
+          <button type="submit" class="btn ghost">Listeyi Temizle</button>
+        </form>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="/js/scanner.js"></script>
+  </body>
+</html>

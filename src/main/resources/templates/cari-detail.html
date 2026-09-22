@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title th:text="${customer.name} + ' · Cari · İntaş ERP'">Cari · İntaş ERP</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <header class="top">
+      <span class="logo">İNTAŞ <b>ERP</b></span>
+      <nav>
+        <a href="/urunler">Ürünler</a>
+        <a href="/satis">Satış</a>
+        <a href="/satislar">Satışlar</a>
+        <a href="/cari" class="active">Cari</a>
+      </nav>
+    </header>
+
+    <div class="wrap">
+      <div class="row">
+        <div>
+          <h1 th:text="${customer.name}">Cari adı</h1>
+          <span class="muted code" th:text="${customer.code}">120.01.001</span>
+          <span class="muted" th:if="${customer.city}" th:text="' · ' + ${customer.city}"></span>
+          <span class="muted" th:if="${customer.phone}" th:text="' · ' + ${customer.phone}"></span>
+        </div>
+        <a class="btn ghost" href="/cari">← Cari listesi</a>
+      </div>
+
+      <div th:if="${message}" class="flash ok" th:text="${message}"></div>
+      <div th:if="${error}" class="flash err" th:text="${error}"></div>
+
+      <div class="summary" style="margin-top: 16px">
+        <div class="box">
+          <div class="k">Güncel Bakiye</div>
+          <div class="v">
+            <span th:if="${customer.balance.signum() > 0}" class="bal-borc"
+                  th:text="${customer.balance} + ' ₺ Borç'">0 ₺</span>
+            <span th:if="${customer.balance.signum() < 0}" class="bal-alacak"
+                  th:text="${customer.balance.abs()} + ' ₺ Alacak'">0 ₺</span>
+            <span th:if="${customer.balance.signum() == 0}" class="bal-zero">0 ₺</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tahsilat -->
+      <div class="card">
+        <h1 style="font-size: 15px; margin-bottom: 4px">Tahsilat Ekle</h1>
+        <form class="inline" method="post" th:action="@{'/cari/' + ${customer.id} + '/tahsilat'}">
+          <input type="text" name="amount" placeholder="Tutar (örn. 5.000,00)" inputmode="decimal" required />
+          <input class="grow" type="text" name="note" placeholder="Açıklama (nakit / kredi kartı...)" />
+          <button type="submit">Tahsilatı İşle</button>
+        </form>
+        <p class="muted" style="margin: 8px 0 0">Tahsilat bakiyeyi düşürür (alacak yazılır).</p>
+      </div>
+
+      <!-- Ekstre -->
+      <div class="card">
+        <h1 style="font-size: 15px; margin-bottom: 4px">Hesap Ekstresi</h1>
+        <div th:if="${ledger.isEmpty()}" class="empty">Henüz hareket yok.</div>
+        <table th:unless="${ledger.isEmpty()}">
+          <thead>
+            <tr>
+              <th>Tarih</th>
+              <th>Tür</th>
+              <th>Açıklama</th>
+              <th class="num">Borç</th>
+              <th class="num">Alacak</th>
+              <th class="num">Bakiye</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="tx : ${ledger}">
+              <td class="muted" th:text="${tx.createdAtLabel}">01.01.2026 10:00</td>
+              <td th:text="${tx.typeLabel}">Satış</td>
+              <td>
+                <a th:if="${tx.saleId != null}" class="edit"
+                   th:href="@{'/satis/' + ${tx.saleId} + '/fis'}" th:text="${tx.description}">Satış Fişi</a>
+                <span th:unless="${tx.saleId != null}" th:text="${tx.description}">Açıklama</span>
+              </td>
+              <td class="num" th:text="${tx.debit.signum() > 0 ? tx.debit + ' ₺' : ''}"></td>
+              <td class="num" th:text="${tx.credit.signum() > 0 ? tx.credit + ' ₺' : ''}"></td>
+              <td class="num" th:text="${tx.balanceAfter} + ' ₺'">0 ₺</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>

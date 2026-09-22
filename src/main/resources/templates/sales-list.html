@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Satışlar · İntaş ERP</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <header class="top">
+      <span class="logo">İNTAŞ <b>ERP</b></span>
+      <nav>
+        <a href="/urunler">Ürünler</a>
+        <a href="/satis">Satış</a>
+        <a href="/satislar" class="active">Satışlar</a>
+        <a href="/cari">Cari</a>
+      </nav>
+    </header>
+
+    <div class="wrap">
+      <div class="row">
+        <div>
+          <h1>Satışlar</h1>
+          <span class="muted" th:text="|Toplam ${sales.size()} tamamlanmış satış|">Toplam 0 satış</span>
+        </div>
+        <a class="btn" href="/satis">+ Yeni Satış</a>
+      </div>
+
+      <div class="card">
+        <div th:if="${sales.isEmpty()}" class="empty">
+          Henüz tamamlanmış satış yok. "Yeni Satış" ile başlayın.
+        </div>
+
+        <table th:unless="${sales.isEmpty()}">
+          <thead>
+            <tr>
+              <th>Fiş No</th>
+              <th>Tarih</th>
+              <th>Cari / Müşteri</th>
+              <th class="num">Adet</th>
+              <th class="num">Genel Toplam</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="s : ${sales}">
+              <td class="code" th:text="'#' + ${s.id}">#1</td>
+              <td class="muted" th:text="${s.completedAtLabel}">01.01.2026 10:00</td>
+              <td th:text="${s.customerLabel}">Müşteri</td>
+              <td class="num" th:text="${s.totalBaseQuantity}">0</td>
+              <td class="num" th:text="${s.totalGross} + ' ₺'">0 ₺</td>
+              <td class="inline" style="gap: 10px">
+                <a class="edit" th:href="@{'/satis/' + ${s.id} + '/fis'}">Fiş</a>
+                <a class="edit" th:href="@{'/satis/' + ${s.id} + '/pdf'(tip='fatura')}" target="_blank">Fatura</a>
+                <a class="edit" th:href="@{'/satis/' + ${s.id} + '/pdf'(tip='irsaliye')}" target="_blank">İrsaliye</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>

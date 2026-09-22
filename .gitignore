@@ -1,0 +1,22 @@
+# Build
+target/
+
+# Local dev database (H2 file) — data is machine-local, not source
+data/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
+
+# TLS keystore — self-signed dev cert; her makinede yerelde üretilir (generate-keystore.sh),
+# özel anahtar repoya KONMAZ.
+*.p12
+keystore.p12

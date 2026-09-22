@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cari Hesaplar · İntaş ERP</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <header class="top">
+      <span class="logo">İNTAŞ <b>ERP</b></span>
+      <nav>
+        <a href="/urunler">Ürünler</a>
+        <a href="/satis">Satış</a>
+        <a href="/satislar">Satışlar</a>
+        <a href="/cari" class="active">Cari</a>
+      </nav>
+    </header>
+
+    <div class="wrap">
+      <div class="row">
+        <div>
+          <h1>Cari Hesaplar</h1>
+          <span class="muted" th:text="|Toplam ${customers.size()} cari|">Toplam 0 cari</span>
+        </div>
+        <a class="btn" href="/cari/yeni">+ Yeni Cari</a>
+      </div>
+
+      <div th:if="${message}" class="flash ok" th:text="${message}"></div>
+      <div th:if="${error}" class="flash err" th:text="${error}"></div>
+
+      <div class="summary" style="margin-top: 16px">
+        <div class="box">
+          <div class="k">Toplam Açık Bakiye</div>
+          <div class="v" th:classappend="${totalReceivable.signum() > 0} ? 'bal-borc' : (${totalReceivable.signum() < 0} ? 'bal-alacak' : 'bal-zero')"
+               th:text="${totalReceivable} + ' ₺'">0 ₺</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div th:if="${customers.isEmpty()}" class="empty">
+          Henüz cari yok. "Yeni Cari" ile ekleyin — sonra satışta seçince borç otomatik işlenir.
+        </div>
+
+        <table th:unless="${customers.isEmpty()}">
+          <thead>
+            <tr>
+              <th>Kod</th>
+              <th>Cari Adı</th>
+              <th>Şehir</th>
+              <th>Telefon</th>
+              <th class="num">Bakiye</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="c : ${customers}">
+              <td class="code" th:text="${c.code}">120.01.001</td>
+              <td th:text="${c.name}">Cari adı</td>
+              <td class="muted" th:text="${c.city}">Şehir</td>
+              <td class="muted" th:text="${c.phone}">Telefon</td>
+              <td class="num">
+                <span th:if="${c.balance.signum() > 0}" class="bal-borc"
+                      th:text="${c.balance} + ' ₺'">0 ₺</span>
+                <span th:if="${c.balance.signum() < 0}" class="bal-alacak"
+                      th:text="${c.balance.abs()} + ' ₺'">0 ₺</span>
+                <span th:if="${c.balance.signum() == 0}" class="bal-zero">0 ₺</span>
+                <span th:if="${c.balance.signum() > 0}" class="tag borc">B</span>
+                <span th:if="${c.balance.signum() < 0}" class="tag alacak">A</span>
+              </td>
+              <td><a class="edit" th:href="@{'/cari/' + ${c.id}}">Ekstre →</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>
