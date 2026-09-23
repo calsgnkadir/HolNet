@@ -5,6 +5,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -92,6 +97,7 @@ public class ProductController {
       @RequestParam(name = "vatRate", required = false) String vatRate,
       @RequestParam(name = "cartonUnit", required = false) String cartonUnit,
       @RequestParam(name = "unitsPerCarton", required = false) String unitsPerCarton,
+      @RequestParam(name = "cartonBarcode", required = false) String cartonBarcode,
       RedirectAttributes redirect) {
 
     Product product = repository.findById(id).orElse(null);
@@ -100,7 +106,16 @@ public class ProductController {
       return "redirect:/urunler";
     }
 
+    // Aynı barkod iki üründe olursa okutma hangisini getireceğini bilemez.
+    for (String bc : new String[] {blankToNull(barcode), blankToNull(cartonBarcode)}) {
+      if (bc != null && repository.barcodeUsedByOther(bc, id)) {
+        redirect.addFlashAttribute("error", "Barkod " + bc + " başka bir üründe kayıtlı.");
+        return "redirect:/urunler/" + id + "/duzenle";
+      }
+    }
+
     try {
+      product.setCartonBarcode(blankToNull(cartonBarcode));
       if (name != null && !name.isBlank()) {
         product.setName(name.trim());
       }
@@ -144,6 +159,35 @@ public class ProductController {
     }
     int units = Integer.parseInt(value);
     return units > 0 ? units : null;
+  }
+
+  @GetMapping("/urunler/toplu-guncelle")
+  public String bulkForm() {
+    return "product-bulk";
+  }
+
+  @PostMapping("/urunler/toplu-guncelle")
+  public String bulkUpdate(@RequestParam("file") MultipartFile file, RedirectAttributes redirect) {
+    if (file == null || file.isEmpty()) {
+      redirect.addFlashAttribute("error", "Lütfen bir Excel dosyası seçin.");
+      return "redirect:/urunler/toplu-guncelle";
+    }
+    try {
+      redirect.addFlashAttribute("result", importService.updateFrom(file.getInputStream()));
+    } catch (Exception e) {
+      redirect.addFlashAttribute("error", "Yükleme başarısız: " + e.getMessage());
+    }
+    return "redirect:/urunler/toplu-guncelle";
+  }
+
+  @GetMapping("/urunler/toplu-guncelle/sablon")
+  public ResponseEntity<byte[]> bulkTemplate() throws java.io.IOException {
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(
+        MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+    headers.setContentDisposition(
+        ContentDisposition.attachment().filename("intas-urun-guncelleme-sablonu.xlsx").build());
+    return new ResponseEntity<>(importService.template(), headers, HttpStatus.OK);
   }
 
   @PostMapping("/urunler/ice-aktar")

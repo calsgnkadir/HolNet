@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fiyat / Barkod / Koli Yükle · İntaş ERP</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <header th:replace="~{fragments/layout :: header('urunler')}"></header>
+
+    <div class="wrap">
+      <div class="row">
+        <div>
+          <h1>Fiyat / Barkod / Koli Yükle</h1>
+          <span class="muted">Mevcut ürünleri koda göre toplu günceller. Stoğa dokunmaz.</span>
+        </div>
+        <a class="btn ghost" href="/urunler">← Ürünler</a>
+      </div>
+
+      <div th:if="${error}" class="flash err" th:text="${error}"></div>
+
+      <!-- Sonuç -->
+      <div th:if="${result}" class="card">
+        <h1 style="font-size: 15px; margin-bottom: 8px">Yükleme sonucu</h1>
+        <div class="summary">
+          <div class="box"><div class="k">Eşleşen ürün</div><div class="v" th:text="${result.matched}">0</div></div>
+          <div class="box"><div class="k">Fiyat</div><div class="v" th:text="${result.prices}">0</div></div>
+          <div class="box"><div class="k">Barkod</div><div class="v" th:text="${result.barcodes}">0</div></div>
+          <div class="box"><div class="k">Koli katsayısı</div><div class="v" th:text="${result.cartons}">0</div></div>
+        </div>
+        <div th:unless="${result.unknownCodes.isEmpty()}" style="margin-top: 14px">
+          <b>Sistemde olmayan kodlar</b>
+          <span class="muted">— önce stok dökümünü (Ürünler → Excel'den İçe Aktar) yükleyin:</span>
+          <div class="muted code" style="margin-top: 4px" th:text="${#strings.listJoin(result.unknownCodes, ', ')}"></div>
+        </div>
+        <div th:unless="${result.problems.isEmpty()}" style="margin-top: 14px">
+          <b>Atlanan satırlar</b>
+          <ul style="margin: 6px 0 0; padding-left: 18px">
+            <li th:each="p : ${result.problems}" th:text="${p}"></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Yükle -->
+      <div class="card">
+        <form class="inline" method="post" action="/urunler/toplu-guncelle" enctype="multipart/form-data">
+          <input type="file" name="file" accept=".xls,.xlsx" required />
+          <button type="submit">Yükle ve Güncelle</button>
+          <a class="btn ghost" href="/urunler/toplu-guncelle/sablon">Boş şablonu indir</a>
+        </form>
+        <div class="hint" style="margin-top: 12px">
+          Tek zorunlu sütun <b>Kodu</b>. Diğerleri isteğe bağlı, hangileri varsa o güncellenir:
+          <b>Barkod</b> (adet), <b>Koli Barkodu</b>, <b>Koli İçi Adet</b>, <b>Satış Fiyatı</b>,
+          <b>Alış Fiyatı</b> (ikisi de KDV hariç), <b>KDV</b>. Boş hücre o alanı değiştirmez —
+          sadece fiyat sütunu olan bir dosya barkodları silmez. Aynı barkod başka üründe varsa atlanır.
+        </div>
+      </div>
+
+      <!-- Nasıl alınır -->
+      <div class="card">
+        <h1 style="font-size: 15px; margin-bottom: 8px">Bu dosyayı Go Plus'tan nasıl alırım?</h1>
+        <ol style="margin: 0; padding-left: 20px; line-height: 1.7">
+          <li>
+            <b>En kolayı — Logo bayisine sorun.</b> "Malzemelerin kodu, adet ve koli barkodu, koli
+            çevrim katsayısı ve satış fiyatını Excel olarak alabilir miyiz?" deyin. Bayi bunu
+            veritabanından birkaç dakikada çıkarır. Hazır sorgu projede var:
+            <span class="code">docs/goplus-urun-guncelleme.sql</span>
+          </li>
+          <li>
+            <b>Kendiniz — liste ekranından.</b> Stok dökümünü ("TÜM ÜRÜNLER.xls") nasıl aldıysanız aynı
+            yol. Malzemeler listesinde barkod ve fiyat sütunları gösterilebiliyorsa onları açıp listeyi
+            Excel'e aktarın (menü adları Go Plus sürümüne göre değişebilir). Başlıklar şablondakilerden
+            farklıysa Excel'de başlık satırını şablondaki gibi düzeltmeniz yeterli.
+          </li>
+          <li>
+            <b>Elle.</b> Az sayıda ürün için şablonu indirip doldurun, ya da ürün kartında
+            <a href="/urunler">Düzenle</a> ile girin (barkodu telefonla okutabilirsiniz).
+          </li>
+        </ol>
+      </div>
+    </div>
+  </body>
+</html>

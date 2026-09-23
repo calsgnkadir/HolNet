@@ -6,6 +6,7 @@ import com.intas.erp.cari.CustomerRepository;
 import com.intas.erp.product.MovementType;
 import com.intas.erp.product.Product;
 import com.intas.erp.product.ProductRepository;
+import com.intas.erp.product.ScanResult;
 import com.intas.erp.product.StockService;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -56,12 +57,14 @@ public class PurchaseService {
     if (unitPrice != null && unitPrice.signum() < 0) {
       throw new IllegalArgumentException("Fiyat negatif olamaz.");
     }
-    Product product = productRepository.requireByCodeOrBarcode(code);
-    int baseQuantity = product.toBaseQuantity(quantity, byCarton);
+    ScanResult scan = productRepository.resolveScan(code);
+    Product product = scan.product();
+    boolean asCarton = scan.asCarton(byCarton);
+    int baseQuantity = product.toBaseQuantity(quantity, asCarton);
 
     BigDecimal price = unitPrice;
     if (price == null && product.getPurchasePrice() != null) {
-      int perUnit = product.toBaseQuantity(1, byCarton);
+      int perUnit = product.toBaseQuantity(1, asCarton);
       price = product.getPurchasePrice().multiply(BigDecimal.valueOf(perUnit));
     }
 
@@ -69,7 +72,7 @@ public class PurchaseService {
     draft.addLine(
         new PurchaseLine(
             product,
-            product.unitLabelFor(byCarton),
+            product.unitLabelFor(asCarton),
             quantity,
             baseQuantity,
             price,

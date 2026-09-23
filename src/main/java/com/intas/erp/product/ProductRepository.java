@@ -13,17 +13,30 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
   Optional<Product> findByBarcode(String barcode);
 
+  Optional<Product> findByCartonBarcode(String cartonBarcode);
+
+  /** Başka bir üründe (adet veya koli barkodu olarak) kullanılıyor mu. */
+  @Query(
+      """
+      select count(p) > 0 from Product p
+      where (p.barcode = :barcode or p.cartonBarcode = :barcode) and p.id <> :exceptId
+      """)
+  boolean barcodeUsedByOther(@Param("barcode") String barcode, @Param("exceptId") Long exceptId);
+
   /**
-   * Satış/fiş/alış ekranlarında yazılan veya okutulan değer: önce ürün kodu, sonra
-   * barkod aranır. Bulunamazsa anlaşılır bir hata fırlatır.
+   * Satış/fiş/alış ekranlarında yazılan veya okutulan değer: sırasıyla ürün kodu,
+   * adet barkodu, koli barkodu aranır. Koli barkodu eşleşirse sonuç "koli" işaretlidir.
+   * Bulunamazsa anlaşılır bir hata fırlatır.
    */
-  default Product requireByCodeOrBarcode(String codeOrBarcode) {
+  default ScanResult resolveScan(String codeOrBarcode) {
     if (codeOrBarcode == null || codeOrBarcode.isBlank()) {
       throw new IllegalArgumentException("Ürün kodu/barkod boş olamaz.");
     }
     String key = codeOrBarcode.trim();
     return findByCode(key)
         .or(() -> findByBarcode(key))
+        .map(p -> new ScanResult(p, false))
+        .or(() -> findByCartonBarcode(key).map(p -> new ScanResult(p, true)))
         .orElseThrow(() -> new IllegalArgumentException("Ürün bulunamadı: " + key));
   }
 

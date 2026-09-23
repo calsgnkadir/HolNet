@@ -12,7 +12,9 @@ Toptancı bir züccaciye/hırdavat işletmesi için geliştirilen hafif **stok�
 - **KDV** — satır bazında oran, ara toplam / KDV / genel toplam.
 - **Cari hesap** — müşteri kartları, **Borç/Alacak bakiye**, hesap ekstresi; satış cariyi borçlandırır, tahsilat düşer. Tek giriş noktasından (`CariService.apply`) bakiye + defter kaydı.
 - **İrsaliye / Satış Faturası PDF** — OpenPDF ile A4 belge (kalemler, KDV, toplamlar, imza alanları).
-- **Barkod** — telefon kamerası (html5-qrcode, HTTPS gerektirir) veya USB/Bluetooth barkod okuyucu (kod alanına doğrudan yazar).
+- **Barkod** — telefon kamerası (html5-qrcode, HTTPS gerektirir) veya USB/Bluetooth barkod okuyucu (kod alanına doğrudan yazar). Adet ve koli için ayrı barkod: koli barkodu okutulunca satır otomatik koli olur.
+- **Stok hareket defteri** — stok yalnızca `StockService.move` ile değişir; her hareket kalan bakiyeyle kaydedilir. Malzeme Fişleri (sayım fazlası/eksiği) ve Satınalma Faturası (stok girişi + son maliyet + tedarikçiye alacak).
+- **Toplu fiyat/barkod/koli güncelleme** — koda göre Excel yükleme; boş hücre alana dokunmaz, stok değişmez, çakışan barkod raporlanır. Go Plus (Logo) veritabanından bu Excel'i çıkaran salt-okunur sorgu: [`docs/goplus-urun-guncelleme.sql`](docs/goplus-urun-guncelleme.sql).
 
 ## Teknoloji
 

@@ -6,6 +6,7 @@ import com.intas.erp.cari.CustomerRepository;
 import com.intas.erp.product.MovementType;
 import com.intas.erp.product.Product;
 import com.intas.erp.product.ProductRepository;
+import com.intas.erp.product.ScanResult;
 import com.intas.erp.product.StockService;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -55,11 +56,13 @@ public class SaleService {
     if (quantity <= 0) {
       throw new IllegalArgumentException("Miktar 0'dan büyük olmalı.");
     }
-    Product product = productRepository.requireByCodeOrBarcode(code);
-    int baseQuantity = product.toBaseQuantity(quantity, byCarton);
+    ScanResult scan = productRepository.resolveScan(code);
+    Product product = scan.product();
+    boolean asCarton = scan.asCarton(byCarton);
+    int baseQuantity = product.toBaseQuantity(quantity, asCarton);
 
     SaleItem item =
-        new SaleItem(product, product.unitLabelFor(byCarton), quantity, baseQuantity);
+        new SaleItem(product, product.unitLabelFor(asCarton), quantity, baseQuantity);
     item.setVatRate(product.getVatRate() != null ? product.getVatRate() : DEFAULT_VAT);
     if (product.getPrice() != null) {
       item.setUnitPrice(product.getPrice());

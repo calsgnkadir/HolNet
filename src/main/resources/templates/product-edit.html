@@ -78,6 +78,16 @@
                    min="1" step="1" placeholder="örn. 60" />
           </label>
 
+          <label class="span2">
+            <span>Koli barkodu</span>
+            <span class="inline" style="gap: 6px">
+              <input class="grow" id="carton-barcode-input" type="text" name="cartonBarcode"
+                     th:value="${product.cartonBarcode}" placeholder="kolinin üzerindeki barkod" />
+              <button type="button" class="btn scan"
+                      onclick="ErpScanner.open('carton-barcode-input')">Okut</button>
+            </span>
+          </label>
+
           <div class="span2 hint">
             Örn. Go Plus'taki gibi <b>1 KOLİ = 60 ADET</b> → koli birimi <code>KOLİ</code>, adet <code>60</code>.
             Satışta "Koli" seçilince stoktan otomatik <b>miktar × 60</b> düşer.

@@ -20,7 +20,8 @@ import java.math.BigDecimal;
     name = "products",
     indexes = {
       @Index(name = "idx_product_code", columnList = "code", unique = true),
-      @Index(name = "idx_product_barcode", columnList = "barcode")
+      @Index(name = "idx_product_barcode", columnList = "barcode"),
+      @Index(name = "idx_product_carton_barcode", columnList = "cartonBarcode")
     })
 public class Product {
 
@@ -51,6 +52,13 @@ public class Product {
   private String cartonUnit;
 
   private Integer unitsPerCarton;
+
+  /**
+   * Kolinin kendi barkodu (Go Plus "Birimli Barkod" — birim başına ayrı barkod).
+   * Bu okutulunca satır otomatik koli olarak eklenir.
+   */
+  @Column(length = 64)
+  private String cartonBarcode;
 
   @Column(length = 160)
   private String supplier;
@@ -146,6 +154,14 @@ public class Product {
 
   public Integer getUnitsPerCarton() {
     return unitsPerCarton;
+  }
+
+  public String getCartonBarcode() {
+    return cartonBarcode;
+  }
+
+  public void setCartonBarcode(String cartonBarcode) {
+    this.cartonBarcode = cartonBarcode;
   }
 
   public void setUnitsPerCarton(Integer unitsPerCarton) {

@@ -3,6 +3,7 @@ package com.intas.erp.slip;
 import com.intas.erp.product.MovementType;
 import com.intas.erp.product.Product;
 import com.intas.erp.product.ProductRepository;
+import com.intas.erp.product.ScanResult;
 import com.intas.erp.product.StockService;
 import java.time.Instant;
 import java.util.List;
@@ -38,14 +39,16 @@ public class StockSlipService {
     if (quantity <= 0) {
       throw new IllegalArgumentException("Miktar 0'dan büyük olmalı.");
     }
-    Product product = productRepository.requireByCodeOrBarcode(code);
+    ScanResult scan = productRepository.resolveScan(code);
+    Product product = scan.product();
+    boolean asCarton = scan.asCarton(byCarton);
     StockSlip draft = currentDraft();
     draft.addLine(
         new StockSlipLine(
             product,
-            product.unitLabelFor(byCarton),
+            product.unitLabelFor(asCarton),
             quantity,
-            product.toBaseQuantity(quantity, byCarton)));
+            product.toBaseQuantity(quantity, asCarton)));
     slipRepository.save(draft);
   }
 
