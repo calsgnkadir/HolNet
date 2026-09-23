@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+  <body>
+    <!--
+      Ortak üst menü. Kullanım:
+        <header th:replace="~{fragments/layout :: header('satis')}"></header>
+      'active' parametresi o sayfanın menü anahtarıdır.
+    -->
+    <header th:fragment="header(active)" class="top">
+      <span class="logo">İNTAŞ <b>ERP</b></span>
+      <nav>
+        <a href="/urunler" th:classappend="${active == 'urunler'} ? 'active'">Ürünler</a>
+        <a href="/satis" th:classappend="${active == 'satis'} ? 'active'">Satış</a>
+        <a href="/satislar" th:classappend="${active == 'satislar'} ? 'active'">Satışlar</a>
+        <a href="/alislar" th:classappend="${active == 'alis'} ? 'active'">Alış</a>
+        <a href="/fisler" th:classappend="${active == 'fisler'} ? 'active'">Malzeme Fişleri</a>
+        <a href="/cari" th:classappend="${active == 'cari'} ? 'active'">Cari</a>
+      </nav>
+    </header>
+  </body>
+</html>

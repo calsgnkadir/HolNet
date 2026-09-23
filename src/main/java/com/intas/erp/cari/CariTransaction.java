@@ -1,9 +1,10 @@
 package com.intas.erp.cari;
 
+import com.intas.erp.common.EnumStringConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Converter;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -30,7 +31,15 @@ public class CariTransaction {
     ACILIS, // opening balance / devir
     SATIS, // sale invoice → borç
     TAHSILAT, // payment received → alacak
+    ALIS, // purchase invoice from a supplier → alacak (we owe them)
     DEKONT // manual adjustment
+  }
+
+  @Converter
+  public static class TypeConverter extends EnumStringConverter<Type> {
+    public TypeConverter() {
+      super(Type.class);
+    }
   }
 
   @Id
@@ -41,7 +50,7 @@ public class CariTransaction {
   @JoinColumn(name = "customer_id")
   private Customer customer;
 
-  @Enumerated(EnumType.STRING)
+  @Convert(converter = TypeConverter.class)
   @Column(nullable = false, length = 16)
   private Type type;
 
@@ -59,6 +68,9 @@ public class CariTransaction {
 
   /** Bağlı satış (varsa), rapor/izleme için. */
   private Long saleId;
+
+  /** Bağlı alış faturası (varsa). */
+  private Long purchaseId;
 
   private Instant createdAt = Instant.now();
 
@@ -117,6 +129,14 @@ public class CariTransaction {
     this.saleId = saleId;
   }
 
+  public Long getPurchaseId() {
+    return purchaseId;
+  }
+
+  public void setPurchaseId(Long purchaseId) {
+    this.purchaseId = purchaseId;
+  }
+
   public Instant getCreatedAt() {
     return createdAt;
   }
@@ -141,6 +161,7 @@ public class CariTransaction {
       case ACILIS -> "Açılış";
       case SATIS -> "Satış";
       case TAHSILAT -> "Tahsilat";
+      case ALIS -> "Alış";
       case DEKONT -> "Dekont";
     };
   }

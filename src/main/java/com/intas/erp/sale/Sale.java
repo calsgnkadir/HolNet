@@ -1,11 +1,12 @@
 package com.intas.erp.sale;
 
 import com.intas.erp.cari.Customer;
+import com.intas.erp.common.EnumStringConverter;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Converter;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -37,11 +38,18 @@ public class Sale {
     COMPLETED
   }
 
+  @Converter
+  public static class StatusConverter extends EnumStringConverter<Status> {
+    public StatusConverter() {
+      super(Status.class);
+    }
+  }
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Enumerated(EnumType.STRING)
+  @Convert(converter = StatusConverter.class)
   @Column(nullable = false, length = 16)
   private Status status = Status.DRAFT;
 

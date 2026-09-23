@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title th:text="'Alış Faturası #' + ${purchase.id} + ' · İntaş ERP'">Alış Faturası · İntaş ERP</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <header th:replace="~{fragments/layout :: header('alis')}"></header>
+
+    <div class="wrap">
+      <div th:if="${message}" class="flash ok noprint" th:text="${message}"></div>
+
+      <div class="card">
+        <div class="row">
+          <div>
+            <h1 th:text="'Alış Faturası #' + ${purchase.id}">Alış Faturası</h1>
+            <span class="muted" th:text="${purchase.supplierLabel} + ' · ' + ${purchase.completedAtLabel}">Tedarikçi · tarih</span>
+            <div class="muted" th:if="${purchase.documentNo != null}"
+                 th:text="'Tedarikçi fatura no: ' + ${purchase.documentNo}"></div>
+          </div>
+          <div class="inline noprint">
+            <a class="btn ghost" th:if="${purchase.supplier != null}"
+               th:href="@{'/cari/' + ${purchase.supplier.id}}">Tedarikçi ekstresi</a>
+            <button type="button" class="btn ghost" onclick="window.print()">Yazdır</button>
+            <a class="btn ghost" href="/alislar">← Alış listesi</a>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Kod</th>
+              <th>Ürün</th>
+              <th class="num">Miktar</th>
+              <th>Birim</th>
+              <th class="num">Adet</th>
+              <th class="num">Birim Fiyat</th>
+              <th class="num">Tutar</th>
+              <th class="num">KDV</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="l : ${purchase.lines}">
+              <td class="code" th:text="${l.productCode}">KOD</td>
+              <td th:text="${l.productName}">Ürün</td>
+              <td class="num" th:text="${l.quantity}">1</td>
+              <td th:text="${l.unitLabel}">ADET</td>
+              <td class="num" th:text="${l.baseQuantity}">1</td>
+              <td class="num" th:text="${l.unitPrice != null ? #numbers.formatDecimal(l.unitPrice, 1, 'POINT', 2, 'COMMA') + ' ₺' : '—'}">—</td>
+              <td class="num" th:text="${l.lineTotal != null ? #numbers.formatDecimal(l.lineTotal, 1, 'POINT', 2, 'COMMA') + ' ₺' : '—'}">—</td>
+              <td class="num" th:text="${l.vatAmount != null ? '%' + l.vatRate + ' · ' + #numbers.formatDecimal(l.vatAmount, 1, 'POINT', 2, 'COMMA') + ' ₺' : '—'}">—</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="6" class="num">Ara Toplam (KDV hariç)</td>
+              <td class="num" th:text="${#numbers.formatDecimal(purchase.total, 1, 'POINT', 2, 'COMMA')} + ' ₺'">0 ₺</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td colspan="6" class="num">Toplam KDV</td>
+              <td class="num" th:text="${#numbers.formatDecimal(purchase.totalVat, 1, 'POINT', 2, 'COMMA')} + ' ₺'">0 ₺</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td colspan="6" class="num grand">Genel Toplam</td>
+              <td class="num grand" th:text="${#numbers.formatDecimal(purchase.totalGross, 1, 'POINT', 2, 'COMMA')} + ' ₺'">0 ₺</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>

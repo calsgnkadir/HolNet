@@ -7,15 +7,7 @@
     <link rel="stylesheet" href="/css/app.css" />
   </head>
   <body>
-    <header class="top">
-      <span class="logo">İNTAŞ <b>ERP</b></span>
-      <nav>
-        <a href="/urunler">Ürünler</a>
-        <a href="/satis">Satış</a>
-        <a href="/satislar">Satışlar</a>
-        <a href="/cari" class="active">Cari</a>
-      </nav>
-    </header>
+    <header th:replace="~{fragments/layout :: header('cari')}"></header>
 
     <div class="wrap">
       <div class="row">
@@ -77,7 +69,9 @@
               <td>
                 <a th:if="${tx.saleId != null}" class="edit"
                    th:href="@{'/satis/' + ${tx.saleId} + '/fis'}" th:text="${tx.description}">Satış Fişi</a>
-                <span th:unless="${tx.saleId != null}" th:text="${tx.description}">Açıklama</span>
+                <a th:if="${tx.purchaseId != null}" class="edit"
+                   th:href="@{'/alis/' + ${tx.purchaseId}}" th:text="${tx.description}">Alış Faturası</a>
+                <span th:if="${tx.saleId == null and tx.purchaseId == null}" th:text="${tx.description}">Açıklama</span>
               </td>
               <td class="num" th:text="${tx.debit.signum() > 0 ? tx.debit + ' ₺' : ''}"></td>
               <td class="num" th:text="${tx.credit.signum() > 0 ? tx.credit + ' ₺' : ''}"></td>

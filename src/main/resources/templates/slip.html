@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Yeni Malzeme Fişi · İntaş ERP</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <header th:replace="~{fragments/layout :: header('fisler')}"></header>
+
+    <div class="wrap">
+      <div class="row">
+        <div>
+          <h1>Yeni Malzeme Fişi</h1>
+          <span class="muted">Stok girişi (50 Sayım Fazlası) veya çıkışı (51 Sayım Eksiği).</span>
+        </div>
+        <a class="btn ghost" href="/fisler">← Fiş listesi</a>
+      </div>
+
+      <div th:if="${error}" class="flash err" th:text="${error}"></div>
+
+      <div class="card">
+        <form class="inline" id="add-form" method="post" action="/fisler/ekle">
+          <input class="grow" id="code-input" type="text" name="code"
+                 placeholder="Ürün kodu veya barkod..." autofocus required />
+          <input type="number" name="quantity" value="1" min="1" style="width: 90px" />
+          <select name="birim">
+            <option value="ADET">Adet</option>
+            <option value="KOLI">Koli</option>
+          </select>
+          <button type="submit">Ekle</button>
+          <button type="button" class="btn scan"
+                  onclick="ErpScanner.open('code-input', { submitFormId: 'add-form' })">Barkod Okut</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div th:if="${slip.lines.isEmpty()}" class="empty">
+          Henüz satır yok. Sayılan / gelen / çıkan ürünleri yukarıdan ekleyin.
+        </div>
+        <table th:unless="${slip.lines.isEmpty()}">
+          <thead>
+            <tr>
+              <th>Kod</th>
+              <th>Ürün</th>
+              <th class="num">Miktar</th>
+              <th>Birim</th>
+              <th class="num">Adet karşılığı</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="l : ${slip.lines}">
+              <td class="code" th:text="${l.productCode}">KOD</td>
+              <td th:text="${l.productName}">Ürün</td>
+              <td class="num" th:text="${l.quantity}">1</td>
+              <td th:text="${l.unitLabel}">ADET</td>
+              <td class="num" th:text="${l.baseQuantity}">1</td>
+              <td>
+                <form method="post" action="/fisler/satir/sil" class="inline">
+                  <input type="hidden" name="lineId" th:value="${l.id}" />
+                  <button type="submit" class="link">Sil</button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4">Toplam</td>
+              <td class="num" th:text="${slip.totalBaseQuantity} + ' adet'">0 adet</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="card" th:unless="${slip.lines.isEmpty()}">
+        <form method="post" action="/fisler/kaydet" class="grid-form">
+          <label>
+            <span>Fiş türü</span>
+            <select name="yon">
+              <option value="GIRIS">(50) Sayım Fazlası — stoğa GİRİŞ</option>
+              <option value="CIKIS">(51) Sayım Eksiği — stoktan ÇIKIŞ</option>
+            </select>
+          </label>
+          <label>
+            <span>Belge no</span>
+            <input type="text" name="documentNo" placeholder="örn. STOK GİRİŞ" />
+          </label>
+          <label class="span2">
+            <span>Açıklama</span>
+            <input class="grow" type="text" name="description" placeholder="örn. Eylül sayımı, depo transferi..." />
+          </label>
+          <div class="span2 inline">
+            <button type="submit" class="btn big">Fişi Kaydet (stok güncelle)</button>
+          </div>
+        </form>
+        <form method="post" action="/fisler/temizle" style="margin-top: 10px">
+          <button type="submit" class="btn ghost">Listeyi Temizle</button>
+        </form>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="/js/scanner.js"></script>
+  </body>
+</html>

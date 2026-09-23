@@ -78,9 +78,6 @@ public class CariController {
 
   /** "1.234,50" veya "1234.50" → BigDecimal; boş → null. */
   private static BigDecimal parseMoney(String raw) {
-    if (raw == null || raw.isBlank()) {
-      return null;
-    }
-    return new BigDecimal(raw.trim().replace(".", "").replace(',', '.'));
+    return com.intas.erp.common.Money.parse(raw);
   }
 }

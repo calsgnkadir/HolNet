@@ -83,6 +83,21 @@ public class CariService {
     apply(customer, CariTransaction.Type.SATIS, grossAmount, BigDecimal.ZERO, description, saleId);
   }
 
+  /**
+   * Alış faturası tedarikçiyi alacaklandırır (KDV dahil tutar): bakiye düşer,
+   * negatife geçerse "alacak" = biz ona borçluyuz.
+   */
+  @Transactional
+  public void postPurchase(
+      Customer supplier, Long purchaseId, BigDecimal grossAmount, String description) {
+    if (supplier == null || grossAmount == null || grossAmount.signum() == 0) {
+      return;
+    }
+    CariTransaction tx =
+        apply(supplier, CariTransaction.Type.ALIS, BigDecimal.ZERO, grossAmount, description, null);
+    tx.setPurchaseId(purchaseId);
+  }
+
   /** Tahsilat cariyi alacaklandırır (bakiye düşer). */
   @Transactional
   public void recordPayment(Long customerId, BigDecimal amount, String note) {
@@ -100,7 +115,7 @@ public class CariService {
   }
 
   /** Tek giriş noktası: bakiyeyi günceller ve hareketi defter kaydına yazar. */
-  private void apply(
+  private CariTransaction apply(
       Customer customer,
       CariTransaction.Type type,
       BigDecimal debit,
@@ -115,7 +130,7 @@ public class CariService {
     tx.setDescription(description);
     tx.setSaleId(saleId);
     tx.setBalanceAfter(newBalance);
-    transactionRepository.save(tx);
+    return transactionRepository.save(tx);
   }
 
   /** Sıradaki 120.01.NNN kodu; boşluk olsa da çakışmayı garanti eder. */

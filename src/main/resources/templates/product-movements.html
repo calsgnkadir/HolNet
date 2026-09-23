@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title th:text="'Hareketler · ' + ${product.code} + ' · İntaş ERP'">Stok Hareketleri · İntaş ERP</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <header th:replace="~{fragments/layout :: header('urunler')}"></header>
+
+    <div class="wrap">
+      <div class="row">
+        <div>
+          <h1 th:text="${product.name}">Ürün adı</h1>
+          <span class="muted code" th:text="${product.code}">KOD</span>
+        </div>
+        <div class="inline">
+          <a class="btn ghost" th:href="@{'/urunler/' + ${product.id} + '/duzenle'}">Düzenle</a>
+          <a class="btn ghost" href="/urunler">← Listeye dön</a>
+        </div>
+      </div>
+
+      <div class="summary" style="margin-top: 16px">
+        <div class="box">
+          <div class="k">Güncel Stok</div>
+          <div class="v" th:classappend="${product.stock < 0} ? 'bal-borc'"
+               th:text="${product.stock} + ' ' + (${product.unit} ?: 'ADET')">0 ADET</div>
+        </div>
+        <div class="box" th:if="${product.purchasePrice != null}">
+          <div class="k">Son Alış (adet, KDV hariç)</div>
+          <div class="v" th:text="${#numbers.formatDecimal(product.purchasePrice, 1, 'POINT', 2, 'COMMA')} + ' ₺'">0 ₺</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h1 style="font-size: 15px; margin-bottom: 4px">Stok Hareketleri</h1>
+        <div th:if="${movements.isEmpty()}" class="empty">
+          Bu ürün için henüz hareket yok. Satış, alış faturası, malzeme fişi veya
+          Go Plus aktarımı yapıldıkça burada listelenir.
+        </div>
+        <table th:unless="${movements.isEmpty()}">
+          <thead>
+            <tr>
+              <th>Tarih</th>
+              <th>Tür</th>
+              <th>Açıklama</th>
+              <th class="num">Giriş</th>
+              <th class="num">Çıkış</th>
+              <th class="num">Kalan</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="m : ${movements}">
+              <td class="muted" th:text="${m.createdAtLabel}">01.01.2026 10:00</td>
+              <td th:text="${m.type.label}">Satış</td>
+              <td>
+                <a th:if="${m.refLink != null}" class="edit" th:href="${m.refLink}" th:text="${m.description}">Belge</a>
+                <span th:unless="${m.refLink != null}" th:text="${m.description}">Açıklama</span>
+              </td>
+              <td class="num bal-alacak" th:text="${m.in} ? ${m.quantity} : ''"></td>
+              <td class="num bal-borc" th:text="${!m.in} ? ${-m.quantity} : ''"></td>
+              <td class="num" th:text="${m.balanceAfter}">0</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>

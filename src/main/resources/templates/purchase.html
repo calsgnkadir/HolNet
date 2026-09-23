@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Yeni Alış Faturası · İntaş ERP</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <header th:replace="~{fragments/layout :: header('alis')}"></header>
+
+    <div class="wrap">
+      <div class="row">
+        <div>
+          <h1>Yeni Alış Faturası</h1>
+          <span class="muted">Tedarikçiden gelen mal — kaydedince stok artar, tedarikçiye alacak yazılır.</span>
+        </div>
+        <a class="btn ghost" href="/alislar">← Alış listesi</a>
+      </div>
+
+      <div th:if="${error}" class="flash err" th:text="${error}"></div>
+
+      <div class="card">
+        <form class="inline" id="add-form" method="post" action="/alis/ekle">
+          <input class="grow" id="code-input" type="text" name="code"
+                 placeholder="Ürün kodu veya barkod..." autofocus required />
+          <input type="number" name="quantity" value="1" min="1" style="width: 90px" />
+          <select name="birim">
+            <option value="ADET">Adet</option>
+            <option value="KOLI">Koli</option>
+          </select>
+          <input type="text" name="unitPrice" inputmode="decimal" style="width: 150px"
+                 placeholder="Birim fiyat (boş = son alış)" />
+          <button type="submit">Ekle</button>
+          <button type="button" class="btn scan"
+                  onclick="ErpScanner.open('code-input', { submitFormId: 'add-form' })">Barkod Okut</button>
+        </form>
+        <p class="muted" style="margin: 10px 0 0">
+          Fiyat seçilen birim içindir (koli seçtiyseniz koli fiyatı), KDV hariç. Boş bırakılırsa ürünün
+          son alış maliyeti kullanılır.
+        </p>
+      </div>
+
+      <div class="card">
+        <div th:if="${purchase.lines.isEmpty()}" class="empty">
+          Henüz satır yok. Faturadaki ürünleri yukarıdan ekleyin.
+        </div>
+        <table th:unless="${purchase.lines.isEmpty()}">
+          <thead>
+            <tr>
+              <th>Kod</th>
+              <th>Ürün</th>
+              <th class="num">Miktar</th>
+              <th>Birim</th>
+              <th class="num">Adet</th>
+              <th class="num">Birim Fiyat</th>
+              <th class="num">Tutar</th>
+              <th class="num">KDV</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="l : ${purchase.lines}">
+              <td class="code" th:text="${l.productCode}">KOD</td>
+              <td th:text="${l.productName}">Ürün</td>
+              <td class="num" th:text="${l.quantity}">1</td>
+              <td th:text="${l.unitLabel}">ADET</td>
+              <td class="num" th:text="${l.baseQuantity}">1</td>
+              <td class="num" th:text="${l.unitPrice != null ? #numbers.formatDecimal(l.unitPrice, 1, 'POINT', 2, 'COMMA') + ' ₺' : '—'}">—</td>
+              <td class="num" th:text="${l.lineTotal != null ? #numbers.formatDecimal(l.lineTotal, 1, 'POINT', 2, 'COMMA') + ' ₺' : '—'}">—</td>
+              <td class="num" th:text="${l.vatAmount != null ? '%' + l.vatRate + ' · ' + #numbers.formatDecimal(l.vatAmount, 1, 'POINT', 2, 'COMMA') + ' ₺' : '—'}">—</td>
+              <td>
+                <form method="post" action="/alis/satir/sil" class="inline">
+                  <input type="hidden" name="lineId" th:value="${l.id}" />
+                  <button type="submit" class="link">Sil</button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4">Ara Toplam / KDV</td>
+              <td class="num" th:text="${purchase.totalBaseQuantity} + ' adet'">0 adet</td>
+              <td></td>
+              <td class="num" th:text="${#numbers.formatDecimal(purchase.total, 1, 'POINT', 2, 'COMMA')} + ' ₺'">0 ₺</td>
+              <td class="num" th:text="${#numbers.formatDecimal(purchase.totalVat, 1, 'POINT', 2, 'COMMA')} + ' ₺'">0 ₺</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td colspan="6"></td>
+              <td class="grand">Genel Toplam</td>
+              <td class="num grand" th:text="${#numbers.formatDecimal(purchase.totalGross, 1, 'POINT', 2, 'COMMA')} + ' ₺'">0 ₺</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="card" th:unless="${purchase.lines.isEmpty()}">
+        <form method="post" action="/alis/tamamla" class="grid-form">
+          <label>
+            <span>Tedarikçi (cari) *</span>
+            <select name="supplierId" required>
+              <option value="">— Seçin —</option>
+              <option th:each="c : ${customers}" th:value="${c.id}"
+                      th:text="${(c.code != null ? c.code + ' · ' : '') + c.name}">Cari</option>
+            </select>
+          </label>
+          <label>
+            <span>Tedarikçi fatura no</span>
+            <input type="text" name="documentNo" placeholder="örn. KDR2026000123" />
+          </label>
+          <div class="span2 hint">
+            Kaydedince: stok <b th:text="${purchase.totalBaseQuantity} + ' adet'">0 adet</b> artar, ürünlerin
+            son alış maliyeti güncellenir, tedarikçiye KDV dahil
+            <b th:text="${#numbers.formatDecimal(purchase.totalGross, 1, 'POINT', 2, 'COMMA')} + ' ₺'">0 ₺</b>
+            alacak yazılır. Tedarikçi listede yoksa önce <a href="/cari/yeni">cari ekleyin</a>.
+          </div>
+          <div class="span2 inline">
+            <button type="submit" class="btn big">Alış Faturasını Kaydet</button>
+          </div>
+        </form>
+        <form method="post" action="/alis/temizle" style="margin-top: 10px">
+          <button type="submit" class="btn ghost">Listeyi Temizle</button>
+        </form>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="/js/scanner.js"></script>
+  </body>
+</html>

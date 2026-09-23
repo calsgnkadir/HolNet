@@ -7,15 +7,7 @@
     <link rel="stylesheet" href="/css/app.css" />
   </head>
   <body>
-    <header class="top">
-      <span class="logo">İNTAŞ <b>ERP</b></span>
-      <nav>
-        <a href="/urunler" class="active">Ürünler</a>
-        <a href="/satis">Satış</a>
-        <a href="/satislar">Satışlar</a>
-        <a href="/cari">Cari</a>
-      </nav>
-    </header>
+    <header th:replace="~{fragments/layout :: header('urunler')}"></header>
 
     <div class="wrap">
       <div class="row">
@@ -51,8 +43,12 @@
           </label>
 
           <label>
-            <span>Stok (adet)</span>
-            <input type="number" name="stock" th:value="${product.stock}" min="0" step="1" />
+            <span>Sayılan stok (adet)</span>
+            <input type="number" name="stock" th:value="${product.stock}" step="1" />
+            <small class="muted">
+              Değiştirirseniz fark sayım fazlası/eksiği olarak
+              <a th:href="@{'/urunler/' + ${product.id} + '/hareketler'}">hareketlere</a> işlenir.
+            </small>
           </label>
 
           <label>

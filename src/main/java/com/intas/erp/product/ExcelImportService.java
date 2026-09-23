@@ -26,10 +26,12 @@ public class ExcelImportService {
   public record Result(int imported, int updated, int skipped) {}
 
   private final ProductRepository repository;
+  private final StockService stockService;
   private final DataFormatter formatter = new DataFormatter(new Locale("tr", "TR"));
 
-  public ExcelImportService(ProductRepository repository) {
+  public ExcelImportService(ProductRepository repository, StockService stockService) {
     this.repository = repository;
+    this.stockService = stockService;
   }
 
   @Transactional
@@ -55,6 +57,7 @@ public class ExcelImportService {
       }
 
       List<Product> toSave = new java.util.ArrayList<>();
+      Map<Product, Integer> targetStock = new java.util.IdentityHashMap<>();
       int imported = 0;
       int updated = 0;
       int skipped = 0;
@@ -83,11 +86,21 @@ public class ExcelImportService {
         }
         product.setUnit(text(row, unitCol));
         product.setSupplier(text(row, supplierCol));
-        product.setStock(intValue(row, stockCol));
+        if (stockCol != null) {
+          targetStock.put(product, intValue(row, stockCol));
+        }
         toSave.add(product);
       }
 
       repository.saveAll(toSave);
+
+      // Stok farkı hareket defterine "Go Plus Aktarımı" olarak işlenir; doğrudan yazılmaz.
+      for (Map.Entry<Product, Integer> e : targetStock.entrySet()) {
+        int diff = e.getValue() - e.getKey().getStock();
+        if (diff != 0) {
+          stockService.move(e.getKey(), MovementType.AKTARIM, diff, "Go Plus stok dökümü", null, null);
+        }
+      }
       return new Result(imported, updated, skipped);
     }
   }

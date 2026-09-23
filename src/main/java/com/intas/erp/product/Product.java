@@ -66,8 +66,33 @@ public class Product {
   @Column(precision = 5, scale = 2)
   private BigDecimal vatRate = new BigDecimal("20");
 
+  /** Son alış maliyeti (adet başı, KDV hariç) — satınalma faturası tamamlanınca güncellenir. */
+  @Column(precision = 12, scale = 4)
+  private BigDecimal purchasePrice;
+
   protected Product() {
     // JPA
+  }
+
+  /** Koli ile girilebiliyor mu (birim setinde çevrim katsayısı var mı). */
+  public boolean hasCarton() {
+    return unitsPerCarton != null && unitsPerCarton > 0;
+  }
+
+  /**
+   * Girilen miktarı ana birime (ADET) çevirir: koli seçildiyse ve katsayı varsa
+   * {@code miktar × koliİçiAdet}, değilse miktarın kendisi. Stok hep ADET'le tutulur.
+   */
+  public int toBaseQuantity(int quantity, boolean byCarton) {
+    return byCarton && hasCarton() ? quantity * unitsPerCarton : quantity;
+  }
+
+  /** Satırda gösterilecek birim adı: KOLİ / ADET. */
+  public String unitLabelFor(boolean byCarton) {
+    if (byCarton && hasCarton()) {
+      return cartonUnit != null ? cartonUnit : "KOLİ";
+    }
+    return unit != null ? unit : "ADET";
   }
 
   public Product(String code, String name) {
@@ -157,5 +182,13 @@ public class Product {
 
   public void setVatRate(BigDecimal vatRate) {
     this.vatRate = vatRate;
+  }
+
+  public BigDecimal getPurchasePrice() {
+    return purchasePrice;
+  }
+
+  public void setPurchasePrice(BigDecimal purchasePrice) {
+    this.purchasePrice = purchasePrice;
   }
 }

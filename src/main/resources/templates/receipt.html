@@ -7,15 +7,7 @@
     <link rel="stylesheet" href="/css/app.css" />
   </head>
   <body>
-    <header class="top noprint">
-      <span class="logo">İNTAŞ <b>ERP</b></span>
-      <nav>
-        <a href="/urunler">Ürünler</a>
-        <a href="/satis">Satış</a>
-        <a href="/satislar">Satışlar</a>
-        <a href="/cari">Cari</a>
-      </nav>
-    </header>
+    <header th:replace="~{fragments/layout :: header('satislar')}"></header>
 
     <div class="wrap">
       <div class="flash ok noprint">Satış tamamlandı — stok güncellendi.</div>

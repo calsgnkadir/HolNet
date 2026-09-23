@@ -3,8 +3,10 @@ package com.intas.erp.sale;
 import com.intas.erp.cari.CariService;
 import com.intas.erp.cari.Customer;
 import com.intas.erp.cari.CustomerRepository;
+import com.intas.erp.product.MovementType;
 import com.intas.erp.product.Product;
 import com.intas.erp.product.ProductRepository;
+import com.intas.erp.product.StockService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import org.springframework.stereotype.Service;
@@ -19,16 +21,19 @@ public class SaleService {
   private final ProductRepository productRepository;
   private final CustomerRepository customerRepository;
   private final CariService cariService;
+  private final StockService stockService;
 
   public SaleService(
       SaleRepository saleRepository,
       ProductRepository productRepository,
       CustomerRepository customerRepository,
-      CariService cariService) {
+      CariService cariService,
+      StockService stockService) {
     this.saleRepository = saleRepository;
     this.productRepository = productRepository;
     this.customerRepository = customerRepository;
     this.cariService = cariService;
+    this.stockService = stockService;
   }
 
   /** The single in-progress sale; created on first use. */
@@ -47,30 +52,14 @@ public class SaleService {
    */
   @Transactional
   public void addLine(String code, int quantity, boolean byCarton) {
-    if (code == null || code.isBlank()) {
-      throw new IllegalArgumentException("Ürün kodu/barkod boş olamaz.");
-    }
     if (quantity <= 0) {
       throw new IllegalArgumentException("Miktar 0'dan büyük olmalı.");
     }
+    Product product = productRepository.requireByCodeOrBarcode(code);
+    int baseQuantity = product.toBaseQuantity(quantity, byCarton);
 
-    String key = code.trim();
-    Product product =
-        productRepository
-            .findByCode(key)
-            .or(() -> productRepository.findByBarcode(key))
-            .orElseThrow(
-                () -> new IllegalArgumentException("Ürün bulunamadı: " + key));
-
-    boolean asCarton =
-        byCarton && product.getUnitsPerCarton() != null && product.getUnitsPerCarton() > 0;
-    int baseQuantity = asCarton ? quantity * product.getUnitsPerCarton() : quantity;
-    String unitLabel =
-        asCarton
-            ? (product.getCartonUnit() != null ? product.getCartonUnit() : "KOLİ")
-            : (product.getUnit() != null ? product.getUnit() : "ADET");
-
-    SaleItem item = new SaleItem(product, unitLabel, quantity, baseQuantity);
+    SaleItem item =
+        new SaleItem(product, product.unitLabelFor(byCarton), quantity, baseQuantity);
     item.setVatRate(product.getVatRate() != null ? product.getVatRate() : DEFAULT_VAT);
     if (product.getPrice() != null) {
       item.setUnitPrice(product.getPrice());
@@ -107,12 +96,6 @@ public class SaleService {
     if (draft.getItems().isEmpty()) {
       throw new IllegalStateException("Boş satış tamamlanamaz — önce ürün ekleyin.");
     }
-    for (SaleItem item : draft.getItems()) {
-      Product product = item.getProduct();
-      product.setStock(product.getStock() - item.getBaseQuantity());
-      productRepository.save(product);
-    }
-
     Customer customer =
         customerId == null ? null : customerRepository.findById(customerId).orElse(null);
     if (customer != null) {
@@ -126,6 +109,17 @@ public class SaleService {
     draft.setStatus(Sale.Status.COMPLETED);
     draft.setCompletedAt(Instant.now());
     Sale saved = saleRepository.save(draft);
+
+    // Stok, hareket defteri üzerinden düşer (satış id'si hareketlere bağlanır).
+    for (SaleItem item : saved.getItems()) {
+      stockService.move(
+          item.getProduct(),
+          MovementType.SATIS,
+          -item.getBaseQuantity(),
+          "Satış Fişi #" + saved.getId() + " — " + saved.getCustomerLabel(),
+          "SATIS",
+          saved.getId());
+    }
 
     // Cari seçildiyse KDV dahil tutarı borç olarak işle.
     if (customer != null) {

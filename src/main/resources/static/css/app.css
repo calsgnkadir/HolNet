@@ -20,8 +20,9 @@ header.top {
   color: #fff;
   padding: 14px 24px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 20px;
+  gap: 8px 20px;
 }
 header.top .logo { font-weight: 800; letter-spacing: 0.5px; }
 header.top .logo b { color: #fbbf24; }

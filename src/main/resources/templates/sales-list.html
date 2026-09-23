@@ -7,15 +7,7 @@
     <link rel="stylesheet" href="/css/app.css" />
   </head>
   <body>
-    <header class="top">
-      <span class="logo">İNTAŞ <b>ERP</b></span>
-      <nav>
-        <a href="/urunler">Ürünler</a>
-        <a href="/satis">Satış</a>
-        <a href="/satislar" class="active">Satışlar</a>
-        <a href="/cari">Cari</a>
-      </nav>
-    </header>
+    <header th:replace="~{fragments/layout :: header('satislar')}"></header>
 
     <div class="wrap">
       <div class="row">

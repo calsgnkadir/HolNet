@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Malzeme Fişleri · İntaş ERP</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <header th:replace="~{fragments/layout :: header('fisler')}"></header>
+
+    <div class="wrap">
+      <div class="row">
+        <div>
+          <h1>Malzeme Fişleri</h1>
+          <span class="muted" th:text="|Toplam ${slips.size()} fiş|">Toplam 0 fiş</span>
+        </div>
+        <a class="btn" href="/fisler/yeni">+ Yeni Fiş</a>
+      </div>
+
+      <div th:if="${message}" class="flash ok" th:text="${message}"></div>
+
+      <div class="card">
+        <div th:if="${slips.isEmpty()}" class="empty">
+          Henüz fiş yok. Sayım, depo girişi veya fire için "Yeni Fiş" ile başlayın.
+        </div>
+        <table th:unless="${slips.isEmpty()}">
+          <thead>
+            <tr>
+              <th>Fiş No</th>
+              <th>Tarih</th>
+              <th>Türü</th>
+              <th>Belge No</th>
+              <th>Açıklama</th>
+              <th class="num">Adet</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="s : ${slips}">
+              <td class="code" th:text="'#' + ${s.id}">#1</td>
+              <td class="muted" th:text="${s.completedAtLabel}">01.01.2026</td>
+              <td>
+                <span class="tag" th:classappend="${s.incoming} ? 'alacak' : 'borc'"
+                      th:text="${s.incoming} ? 'GİRİŞ' : 'ÇIKIŞ'">GİRİŞ</span>
+                <span th:text="${s.type.label}">(50) Sayım Fazlası</span>
+              </td>
+              <td th:text="${s.documentNo}">STOK GİRİŞ</td>
+              <td class="muted" th:text="${s.description}">Açıklama</td>
+              <td class="num" th:text="${s.totalBaseQuantity}">0</td>
+              <td><a class="edit" th:href="@{'/fisler/' + ${s.id}}">Detay</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Alış Faturaları · İntaş ERP</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <header th:replace="~{fragments/layout :: header('alis')}"></header>
+
+    <div class="wrap">
+      <div class="row">
+        <div>
+          <h1>Alış Faturaları</h1>
+          <span class="muted" th:text="|Toplam ${purchases.size()} fatura|">Toplam 0 fatura</span>
+        </div>
+        <a class="btn" href="/alis">+ Yeni Alış Faturası</a>
+      </div>
+
+      <div class="card">
+        <div th:if="${purchases.isEmpty()}" class="empty">
+          Henüz alış faturası yok. Tedarikçiden mal geldiğinde "Yeni Alış Faturası" ile girin.
+        </div>
+        <table th:unless="${purchases.isEmpty()}">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Tarih</th>
+              <th>Tedarikçi</th>
+              <th>Fatura No</th>
+              <th class="num">Adet</th>
+              <th class="num">Genel Toplam</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="p : ${purchases}">
+              <td class="code" th:text="'#' + ${p.id}">#1</td>
+              <td class="muted" th:text="${p.completedAtLabel}">01.01.2026</td>
+              <td th:text="${p.supplierLabel}">Tedarikçi</td>
+              <td class="muted" th:text="${p.documentNo}">-</td>
+              <td class="num" th:text="${p.totalBaseQuantity}">0</td>
+              <td class="num" th:text="${#numbers.formatDecimal(p.totalGross, 1, 'POINT', 2, 'COMMA')} + ' ₺'">0 ₺</td>
+              <td><a class="edit" th:href="@{'/alis/' + ${p.id}}">Detay</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>

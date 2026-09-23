@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title th:text="'Malzeme Fişi #' + ${slip.id} + ' · İntaş ERP'">Malzeme Fişi · İntaş ERP</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <header th:replace="~{fragments/layout :: header('fisler')}"></header>
+
+    <div class="wrap">
+      <div th:if="${message}" class="flash ok noprint" th:text="${message}"></div>
+
+      <div class="card">
+        <div class="row">
+          <div>
+            <h1 th:text="'Malzeme Fişi #' + ${slip.id}">Malzeme Fişi</h1>
+            <span class="tag" th:classappend="${slip.incoming} ? 'alacak' : 'borc'"
+                  th:text="${slip.incoming} ? 'GİRİŞ' : 'ÇIKIŞ'">GİRİŞ</span>
+            <span class="muted" th:text="${slip.type.label} + ' · ' + ${slip.completedAtLabel}">Tür · tarih</span>
+            <div class="muted" th:if="${slip.documentNo != null or slip.description != null}"
+                 th:text="${(slip.documentNo ?: '') + (slip.documentNo != null and slip.description != null ? ' — ' : '') + (slip.description ?: '')}"></div>
+          </div>
+          <div class="inline noprint">
+            <button type="button" class="btn ghost" onclick="window.print()">Yazdır</button>
+            <a class="btn ghost" href="/fisler">← Fiş listesi</a>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Kod</th>
+              <th>Ürün</th>
+              <th class="num">Miktar</th>
+              <th>Birim</th>
+              <th class="num">Adet</th>
+              <th class="noprint"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="l : ${slip.lines}">
+              <td class="code" th:text="${l.productCode}">KOD</td>
+              <td th:text="${l.productName}">Ürün</td>
+              <td class="num" th:text="${l.quantity}">1</td>
+              <td th:text="${l.unitLabel}">ADET</td>
+              <td class="num" th:text="${(slip.incoming ? '+' : '−') + l.baseQuantity}">+1</td>
+              <td class="noprint">
+                <a class="edit" th:href="@{'/urunler/' + ${l.product.id} + '/hareketler'}">Hareketler</a>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4">Toplam</td>
+              <td class="num" th:text="${slip.totalBaseQuantity} + ' adet'">0 adet</td>
+              <td class="noprint"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>
