@@ -2,8 +2,11 @@
   İntaş ERP — Go Plus'tan fiyat / barkod / koli verisi
   ====================================================
 
-  Kim çalıştırır: Logo bayisi ya da SQL Server'a erişimi olan kişi (SSMS).
-  Ne yapar      : SADECE OKUR (SELECT). Go Plus verisinde hiçbir şeyi değiştirmez.
+  Kim çalıştırır: MERKEZ1 bilgisayarında SSMS'i açıp "MERKEZ1\GOPLUS" sunucusuna Windows
+                  Authentication ile bağlanan kişi (ya da bayi). Çalıştırmadan önce SSMS'in üst
+                  çubuğundaki veritabanı listesinden Go Plus veritabanını seçin.
+  Ne yapar      : SADECE OKUR (SELECT, WITH (NOLOCK) — Go Plus çalışırken kilitlemez).
+                  Go Plus verisinde hiçbir şeyi değiştirmez.
   Çıktı         : İntaş ERP şablonuyla birebir aynı sütunlar —
                   Kodu | Barkod | Koli Barkodu | Koli İçi Adet | Satış Fiyatı | Alış Fiyatı | KDV
   Kaydetme      : Sonuç tablosunda sağ tık > "Copy with Headers" → boş bir Excel'e yapıştır →
@@ -26,12 +29,12 @@ SELECT
     SF.NETFIYAT     AS [Satış Fiyatı],
     AF.NETFIYAT     AS [Alış Fiyatı],
     I.VAT           AS [KDV]
-FROM LG_127_ITEMS I
+FROM LG_127_ITEMS I WITH (NOLOCK)
 
 -- Ana birim (ADET) satırı
 OUTER APPLY (
     SELECT TOP 1 U.LOGICALREF AS REF
-    FROM LG_127_UNITSETL U
+    FROM LG_127_UNITSETL U WITH (NOLOCK)
     WHERE U.UNITSETREF = I.UNITSETREF AND U.MAINUNIT = 1
 ) ANA
 
@@ -40,19 +43,19 @@ OUTER APPLY (
     SELECT TOP 1
         A.UNITLINEREF AS REF,
         CAST(ROUND(A.CONVFACT2 / NULLIF(A.CONVFACT1, 0), 0) AS INT) AS ADET
-    FROM LG_127_ITMUNITA A
+    FROM LG_127_ITMUNITA A WITH (NOLOCK)
     WHERE A.ITEMREF = I.LOGICALREF AND A.UNITLINEREF <> ANA.REF
     ORDER BY A.LINENR
 ) KOLI
 
 -- Birimli barkodlar: adetin ve kolinin ayrı barkodu
 OUTER APPLY (
-    SELECT TOP 1 B.BARCODE FROM LG_127_UNITBARCODE B
+    SELECT TOP 1 B.BARCODE FROM LG_127_UNITBARCODE B WITH (NOLOCK)
     WHERE B.ITEMREF = I.LOGICALREF AND B.UNITLINEREF = ANA.REF
     ORDER BY B.LINENR
 ) AB
 OUTER APPLY (
-    SELECT TOP 1 B.BARCODE FROM LG_127_UNITBARCODE B
+    SELECT TOP 1 B.BARCODE FROM LG_127_UNITBARCODE B WITH (NOLOCK)
     WHERE B.ITEMREF = I.LOGICALREF AND B.UNITLINEREF = KOLI.REF
     ORDER BY B.LINENR
 ) KB
@@ -61,7 +64,7 @@ OUTER APPLY (
 OUTER APPLY (
     SELECT TOP 1
         CASE WHEN P.INCVAT = 1 THEN P.PRICE / (1 + I.VAT / 100.0) ELSE P.PRICE END AS NETFIYAT
-    FROM LG_127_PRCLIST P
+    FROM LG_127_PRCLIST P WITH (NOLOCK)
     WHERE P.CARDREF = I.LOGICALREF AND P.PTYPE = 2 AND P.ACTIVE = 0
       AND (P.UOMREF = ANA.REF OR P.UOMREF = 0)
     ORDER BY P.BEGDATE DESC, P.LOGICALREF DESC
@@ -71,7 +74,7 @@ OUTER APPLY (
 OUTER APPLY (
     SELECT TOP 1
         CASE WHEN P.INCVAT = 1 THEN P.PRICE / (1 + I.VAT / 100.0) ELSE P.PRICE END AS NETFIYAT
-    FROM LG_127_PRCLIST P
+    FROM LG_127_PRCLIST P WITH (NOLOCK)
     WHERE P.CARDREF = I.LOGICALREF AND P.PTYPE = 1 AND P.ACTIVE = 0
       AND (P.UOMREF = ANA.REF OR P.UOMREF = 0)
     ORDER BY P.BEGDATE DESC, P.LOGICALREF DESC
